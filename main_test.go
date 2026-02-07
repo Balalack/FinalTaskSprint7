@@ -28,6 +28,11 @@ func TestCafeNegative(t *testing.T) {
 		req := httptest.NewRequest("GET", v.request, nil)
 		handler.ServeHTTP(res, req)
 
+		if res.Code != http.StatusOK {
+			http.Error(res, "Не удалось иницировать res-req", http.StatusBadRequest)
+			return
+		}
+
 		assert.Equal(t, v.status, res.Code)
 		assert.Equal(t, v.message, strings.TrimSpace(res.Body.String()))
 	}
@@ -72,10 +77,15 @@ func TestCafeCount(t *testing.T) {
 		req := httptest.NewRequest("GET", v.request, nil)
 
 		handler.ServeHTTP(res, req)
+
+		if res.Code != http.StatusOK {
+			http.Error(res, "Не удалось иницировать res-req", http.StatusBadRequest)
+			return
+		}
 		result := res.Body.String()
 
 		if v.response != 0 {
-			assert.Equal(t, v.response, len(strings.Split(result, ",")))
+			assert.Len(t, strings.Split(result, ","), v.response)
 			continue
 		}
 		assert.Equal(t, "", result)
@@ -101,6 +111,11 @@ func TestCafeSearch(t *testing.T) {
 		req := httptest.NewRequest("GET", resultRequest, nil)
 
 		handler.ServeHTTP(res, req)
+
+		if res.Code != http.StatusOK {
+			http.Error(res, "Не удалось иницировать res-req", http.StatusBadRequest)
+			return
+		}
 		result := strings.Split(res.Body.String(), ",")
 
 		if v.response == 0 {
@@ -108,10 +123,9 @@ func TestCafeSearch(t *testing.T) {
 			continue
 		}
 
-		assert.Equal(t, v.response, len(result))
+		assert.Len(t, result, v.response)
 		for _, s := range result {
-			b := strings.Contains(strings.ToLower(s), v.request)
-			assert.Equal(t, b, true)
+			assert.Contains(t, strings.ToLower(s), v.request)
 		}
 	}
 }
